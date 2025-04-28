@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Api;
+use App\Services\BaseService;
 
 use App\Jobs\SendNotification;
 use App\Models\User;

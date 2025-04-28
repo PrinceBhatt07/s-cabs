@@ -1,8 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Api;
+
+use App\Http\Resources\UserResource;
+use App\Services\BaseService;
 
 use App\Models\User;
+use App\Services\MessageService;
 use Exception;
 
 class VerifyOTPService extends BaseService
@@ -140,18 +144,22 @@ class VerifyOTPService extends BaseService
                 $user->id_proof_status = 'pending';
                 $user->fcm_token = $request->fcm_token;
                 $user->save();
-                
-                $responseData = [
-                    'customer_id' => $user->id,
-                    'email_verified' => $user->email_verified == 1 ? true : false,
-                    'phone_verified' => $user->phone_verified == 1 ? true : false,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'role' => $user->role,
-                    'name' => $user->name,
-                    'token' => $token,
-                ];
 
+                $user['token'] = $token;
+                
+                // $responseData = [
+                //     'customer_id' => $user->id,
+                //     'email_verified' => $user->email_verified == 1 ? true : false,
+                //     'phone_verified' => $user->phone_verified == 1 ? true : false,
+                //     'email' => $user->email,
+                //     'phone' => $user->phone,
+                //     'role' => $user->role,
+                //     'name' => $user->name,
+                //     'token' => $token,
+                // ];
+
+                $responseData = new UserResource($user);
+          
                 return $this->jsonResponse(true, 'ID proof submitted. You can start your trip after admin approval.', $responseData);
             }
     

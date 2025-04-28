@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ResendOTPRequest;
 use App\Http\Requests\UploadCustomerIDRequest;
 use App\Http\Requests\VerifyOTPRequest;
-use App\Services\VerifyOTPService;
+use App\Services\Api\VerifyOTPService;
 use Illuminate\Http\Request;
 use Twilio\Rest\Verify;
 

@@ -26,6 +26,7 @@ return new class extends Migration
             $table->enum('id_proof_status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('id_proof_rejection_reason')->nullable();
             $table->enum('role', ['admin', 'customer', 'driver'])->default('customer');
+            $table->boolean('is_verified')->default(false);
 
             // Driver Verification
             $table->string('driver_image')->nullable();

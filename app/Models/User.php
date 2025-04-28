@@ -42,6 +42,7 @@ class User extends Authenticatable
         'email_verified',
         'mobile_verified',
         'fcm_token',
+        'is_verified',
     ];
 
     /**

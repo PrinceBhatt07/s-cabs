@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\VerificationController;
+use App\Http\Controllers\Api\EstimatePriceController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +19,11 @@ Route::post('/verify-otp', [VerificationController::class, 'verifyOTP']);
 Route::post('/resend-otp', [VerificationController::class, 'resendOTP']);
 Route::post('/id-proof-upload', [VerificationController::class, 'uploadID']);
 
+
+Route::get('/location/search', [LocationController::class, 'searchPlace']);
+Route::post('/get-one-way-price', [EstimatePriceController::class, 'getOneWayPrice']);
+Route::post('/get-round-trip-price', [EstimatePriceController::class, 'getRoundTripPrice']);
+Route::post('/get-local-trip-price', [EstimatePriceController::class, 'getLocalTripPrice']);
 
 Route::middleware('auth:api')->group(function () {
 

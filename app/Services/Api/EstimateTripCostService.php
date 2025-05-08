@@ -1,12 +1,142 @@
 <?php
 
 namespace App\Services\Api;
+
+use App\Http\Resources\EstimateTourPriceResource;
+use App\Models\CarCategory;
+use App\Models\FixedTourPrice;
 use App\Services\BaseService;
+use Illuminate\Support\Facades\Http;
+use Exception;
 
 class EstimateTripCostService extends BaseService
 {
     public function getOneWayPrice($request)
     {
-        
+        try {
+            $fromPlaceId = $request->input('from_place_id');
+            $toPlaceId = $request->input('to_place_id');
+            $pickupDate = $request->input('pickup_date');
+            $pickupTime = $request->input('pickup_time');
+
+            $calculatedDistance = $this->calculateDistance($fromPlaceId, $toPlaceId);
+            $fixedPrices = $this->checkFixedPrice($fromPlaceId, $toPlaceId);
+
+
+            if ($fixedPrices->isNotEmpty()) {
+                $resources = $fixedPrices->map(function ($item) use ($pickupDate, $pickupTime, $calculatedDistance) {
+                    return new EstimateTourPriceResource($item, $pickupDate, $pickupTime, $calculatedDistance);
+                });
+                return $this->jsonResponse(true, 'Fixed price found', $resources);
+            } else {
+                return $this->jsonResponse(false, 'No fixed price found for this route', []);
+            }
+        } catch (Exception $e) {
+            return $this->jsonResponse(false, $e->getMessage(), [], 500);
+        }
+    }
+
+    public function calculateDistance($originPlaceId, $destinationPlaceId)
+    {
+        $apiKey = env('GOOGLE_MAPS_API_KEY');
+        $url = 'https://maps.googleapis.com/maps/api/distancematrix/json';
+
+        $response = Http::get($url, [
+            'origins' => "place_id:$originPlaceId",
+            'destinations' => "place_id:$destinationPlaceId",
+            'key' => $apiKey,
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+
+            if (
+                isset($data['rows'][0]['elements'][0]['status']) &&
+                $data['rows'][0]['elements'][0]['status'] === 'OK'
+            ) {
+                return [
+                    'distance_text' => $data['rows'][0]['elements'][0]['distance']['text'],
+                    'distance_meters' => $data['rows'][0]['elements'][0]['distance']['value'],
+                    'duration' => $data['rows'][0]['elements'][0]['duration']['text'],
+                ];
+            } else {
+                return ['error' => 'No route found.'];
+            }
+        }
+
+        return ['error' => 'API request failed.'];
+    }
+
+    public function checkFixedPrice($fromPlaceId, $toPlaceId)
+    {
+        return FixedTourPrice::where('from_place_id', $fromPlaceId)
+            ->where('to_place_id', $toPlaceId)
+            ->with('carCategory')
+            ->get();
+    }
+
+    public function getRoundTripPrice($request)
+    {
+        try {
+            $fromPlaceId = $request->input('from_place_id');
+            $toPlaceId = $request->input('to_place_id');
+            $pickupDate = $request->input('pickup_date');
+            $pickupTime = $request->input('pickup_time');
+            $returnDate = $request->input('return_date');
+
+
+            $calculatedDistance = $this->calculateDistance($fromPlaceId, $toPlaceId);
+            $calculatedDistance['distance_meters'] *= 2;
+
+            preg_match('/([\d,.]+)\s*km/', $calculatedDistance['distance_text'], $matches);
+            if (isset($matches[1])) {
+                $numericDistance = floatval(str_replace(',', '', $matches[1]));
+                $doubledDistance = $numericDistance * 2;
+                $calculatedDistance['distance_text'] = round($doubledDistance) . ' km';
+            }
+            $durationString = $calculatedDistance['duration'];
+            $totalMinutes = 0;
+            if (preg_match('/(\d+)\s*hour/', $durationString, $hoursMatch)) {
+                $totalMinutes += intval($hoursMatch[1]) * 60;
+            }
+            if (preg_match('/(\d+)\s*min/', $durationString, $minsMatch)) {
+                $totalMinutes += intval($minsMatch[1]);
+            }
+            $totalMinutes *= 2;
+            $hours = intdiv($totalMinutes, 60);
+            $minutes = $totalMinutes % 60;
+            $durationParts = [];
+            if ($hours > 0) {
+                $durationParts[] = $hours . ' hours';
+            }
+            if ($minutes > 0) {
+                $durationParts[] = $minutes . ' min';
+            }
+            $calculatedDistance['duration'] = implode(' ', $durationParts);
+
+            $getAllCars = $this->getAllCars();
+ 
+            $getAllCars->map(function ($item) use ($fromPlaceId, $toPlaceId, $returnDate ,$calculatedDistance) {
+                $item->price = $item->price_per_km * $calculatedDistance['distance_meters'] / 1000;
+                $item->from_place_id = $fromPlaceId;
+                $item->to_place_id = $toPlaceId;
+                $item->return_date = $returnDate;
+                return $item;
+            });
+
+            $resources = $getAllCars->map(function ($item) use ($pickupDate, $pickupTime , $calculatedDistance) {
+                return new EstimateTourPriceResource($item, $pickupDate, $pickupTime , $calculatedDistance);
+            });
+            
+            return $this->jsonResponse(true, 'Estimate price for round trip', $resources);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(false, $e->getMessage(), [], 500);
+        }
+    }
+
+    public function getAllCars()
+    {
+        return CarCategory::get();
     }
 }

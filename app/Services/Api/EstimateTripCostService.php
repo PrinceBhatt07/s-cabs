@@ -22,12 +22,17 @@ class EstimateTripCostService extends BaseService
             $calculatedDistance = $this->calculateDistance($fromPlaceId, $toPlaceId);
             $fixedPrices = $this->checkFixedPrice($fromPlaceId, $toPlaceId);
 
+            $fixedPrices->map(function ($item){
+                $item->trip_type = 'one_way';
+                return $item;
+            });
+
 
             if ($fixedPrices->isNotEmpty()) {
                 $resources = $fixedPrices->map(function ($item) use ($pickupDate, $pickupTime, $calculatedDistance) {
                     return new EstimateTourPriceResource($item, $pickupDate, $pickupTime, $calculatedDistance);
                 });
-                return $this->jsonResponse(true, 'Fixed price found', $resources);
+                return $this->jsonResponse(true, 'Fixed price found for one way', $resources);
             } else {
                 return $this->jsonResponse(false, 'No fixed price found for this route', []);
             }
@@ -121,13 +126,14 @@ class EstimateTripCostService extends BaseService
                 $item->from_place_id = $fromPlaceId;
                 $item->to_place_id = $toPlaceId;
                 $item->return_date = $returnDate;
+                $item->trip_type = 'round_trip';
                 return $item;
             });
 
-            $resources = $getAllCars->map(function ($item) use ($pickupDate, $pickupTime , $calculatedDistance) {
-                return new EstimateTourPriceResource($item, $pickupDate, $pickupTime , $calculatedDistance);
+            $resources = $getAllCars->map(function ($item) use ($pickupDate, $pickupTime, $returnDate, $calculatedDistance) {
+                return new EstimateTourPriceResource($item, $pickupDate, $pickupTime,  $calculatedDistance , $returnDate);
             });
-            
+
             return $this->jsonResponse(true, 'Estimate price for round trip', $resources);
 
         } catch (Exception $e) {
@@ -138,5 +144,40 @@ class EstimateTripCostService extends BaseService
     public function getAllCars()
     {
         return CarCategory::get();
+    }
+
+    public function getLocalTripPrice($request)
+    {
+        try {
+            $fromPlaceId = $request->input('from_place_id');
+            $pickupDate = $request->input('pickup_date');
+            $pickupTime = $request->input('pickup_time');
+            $totalHours = $request->input('total_hours');
+            $totalKm = $request->input('total_km');
+
+            $getAllCars = $this->getAllCars();
+
+            $calculatedDistance = [
+                'distance_text' => $totalKm . ' km',
+                'distance_meters' => $totalKm * 1000,
+                'duration' => $totalHours . ' hours',
+            ];
+ 
+            $getAllCars->map(function ($item) use ($fromPlaceId, $pickupDate, $pickupTime, $totalHours, $totalKm) {
+                $item->price = ($item->price_per_hour * $totalHours);
+                $item->from_place_id = $fromPlaceId;
+                $item->trip_type = 'local_trip';
+                return $item;
+            });
+
+            $resources = $getAllCars->map(function ($item) use ($pickupDate, $pickupTime,  $calculatedDistance) {
+                return new EstimateTourPriceResource($item, $pickupDate, $pickupTime,  $calculatedDistance);
+            });
+
+            return $this->jsonResponse(true, 'Estimate price for local trip', $resources);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(false, 'Error: ' . $e->getMessage(), [], 500);
+        }
     }
 }

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->decimal('new_model_car_price', 8, 2)->default(0);
             $table->decimal('price_per_km', 8, 2)->default(0);
             $table->decimal('price_per_hour', 8, 2)->default(0);
+            $table->decimal('price_per_location', 8, 2)->default(0);
             $table->unsignedTinyInteger('no_of_seats')->default(0);
             $table->unsignedInteger('luggage_capacity')->nullable();
             $table->timestamps();

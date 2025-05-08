@@ -17,6 +17,7 @@ class CarCategory extends Model
         'new_model_car_price',
         'price_per_km',
         'price_per_hour',
+        'price_per_location',
         'no_of_seats', 
         'luggage_capacity',
     ];

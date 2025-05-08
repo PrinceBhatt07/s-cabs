@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EstimateLocalTripRequest;
 use App\Http\Requests\EstimateRoundTripRequest;
 use App\Http\Requests\GetOneWayPriceRequest;
 use App\Services\Api\EstimateTripCostService;
@@ -19,5 +20,10 @@ class EstimatePriceController extends Controller
     public function getRoundTripPrice(EstimateRoundTripRequest $request)
     {
         return (new EstimateTripCostService())->getRoundTripPrice($request);
+    }
+
+    public function getLocalTripPrice(EstimateLocalTripRequest $request)
+    {
+        return (new EstimateTripCostService())->getLocalTripPrice($request);
     }
 }

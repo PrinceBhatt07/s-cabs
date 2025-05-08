@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\VerificationController;
+use App\Http\Controllers\Api\BookTripController;
 use App\Http\Controllers\Api\EstimatePriceController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Auth\LoginController;
@@ -21,9 +22,15 @@ Route::post('/id-proof-upload', [VerificationController::class, 'uploadID']);
 
 
 Route::get('/location/search', [LocationController::class, 'searchPlace']);
+Route::get('/nearby-places', [LocationController::class, 'getNearbyPlaces']);
+
 Route::post('/get-one-way-price', [EstimatePriceController::class, 'getOneWayPrice']);
 Route::post('/get-round-trip-price', [EstimatePriceController::class, 'getRoundTripPrice']);
 Route::post('/get-local-trip-price', [EstimatePriceController::class, 'getLocalTripPrice']);
+
+Route::post('/book-one-way-trip', [BookTripController::class, 'bookOneWayTrip']);
+Route::post('/book-round-trip', [BookTripController::class, 'bookRoundTrip']);
+Route::post('/book-local-trip', [BookTripController::class, 'bookLocalTrip']);
 
 Route::middleware('auth:api')->group(function () {
 

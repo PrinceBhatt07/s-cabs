@@ -32,7 +32,13 @@ class EstimateTourPriceResource extends JsonResource
     {
         return [
             "from_place_id"=> $this->from_place_id,
+            "from_place_name"=> $this->from_place_name ?? null,
+            "from_place_lattitude"=> $this->from_place_lattitude ?? null,
+            "from_place_longitude"=> $this->from_place_longitude ?? null,
             "to_place_id"=> $this->to_place_id ?? null,
+            "to_place_name"=> $this->to_place_name ?? null,
+            "to_place_lattitude"=> $this->to_place_lattitude ?? null,
+            "to_place_longitude"=> $this->to_place_longitude ?? null,
             "pickupDate"=> $this->pickupDate,
             "pickupTime"=> $this->pickupTime,
             "returnDate"=> $this->returnDate ?? null,

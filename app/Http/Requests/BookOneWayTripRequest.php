@@ -25,7 +25,13 @@ class BookOneWayTripRequest extends FormRequest
     {
         return [
             'from_place_id' => ['required', 'string'],
+            'from_place_name' => ['required', 'string'],
+            "from_place_lattitude" => [ 'required', 'numeric'],
+            "from_place_longitude" => [ 'required', 'numeric'],
             'to_place_id' => ['required', 'string'],
+            'to_place_name' => ['required', 'string'],
+            "to_place_lattitude" => [ 'required', 'numeric'],
+            "to_place_longitude" => [ 'required', 'numeric'],
             'pickup_date' => ['required', 'date_format:Y-m-d'],
             'pickup_time' => ['required', 'date_format:H:i'],
             'car_category_id' => ['required', 'integer' , 'exists:car_categories,id'],
@@ -35,9 +41,30 @@ class BookOneWayTripRequest extends FormRequest
             'is_new_model_car_price_included' => ['required', 'boolean'],
             'total_distance' => ['required', 'integer', 'min:1'],
             'total_price' => ['required', 'integer', 'min:1'],
-            'pickup_location_place_ids' => ['required', 'array' , 'min:1'],
-            'drop_location_place_ids' => ['required', 'array' , 'min:1'],
+            'pickup_locations' => ['required', 'array' , 'min:1'],
+            'drop_locations' => ['required', 'array' , 'min:1'],
             'selected_payment_plan' => ['required', 'string', 'in:25_percent,50_percent,full_payment,cash_on_completion'],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'from_place_id.required' => 'From Place ID is required',
+            'to_place_id.required' => 'To Place ID is required',
+            'pickup_date.required' => 'Pickup Date is required',
+            'pickup_time.required' => 'Pickup Time is required',
+            'car_category_id.required' => 'Car Category ID is required',
+            'is_chauffer_price_included.required' => 'Is Chauffer Price Included is required',
+            'is_diesel_car_price_included.required' => 'Is Diesel Car Price Included is required',
+            'is_luggage_carrier_price_included.required' => 'Is Luggage Carrier Price Included is required',
+            'is_new_model_car_price_included.required' => 'Is New Model Car Price Included is required',
+            'total_distance.required' => 'Total Distance is required',
+            'total_price.required' => 'Total Price is required',
+            'pickup_location_place_ids.required' => 'Pickup Location Place IDs is required',
+            'drop_location_place_ids.required' => 'Drop Location Place IDs is required',
+            'selected_payment_plan.required' => 'Selected Payment Plan is required',
+            'selected_payment_plan.in' => 'Selected Payment Plan is invalid choose from 25_percent,50_percent,full_payment,cash_on_completion',
         ];
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\BookingOrder;
+use App\Observers\BookingObserver;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,5 +34,7 @@ class AppServiceProvider extends ServiceProvider
                 Request::HEADER_X_FORWARDED_PROTO
             );
         }
+
+        BookingOrder::observe(BookingObserver::class);
     }
 }

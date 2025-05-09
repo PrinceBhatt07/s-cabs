@@ -22,8 +22,24 @@ class EstimateTripCostService extends BaseService
             $calculatedDistance = $this->calculateDistance($fromPlaceId, $toPlaceId);
             $fixedPrices = $this->checkFixedPrice($fromPlaceId, $toPlaceId);
 
-            $fixedPrices->map(function ($item){
+            $getfromPlaceDetails =  (new LocationService())->getPlaceDetails($fromPlaceId);
+            $getfromPlaceName =  $getfromPlaceDetails->json()['result']['formatted_address'] ?? '';
+            $getFromPlaceLattitude =  $getfromPlaceDetails->json()['result']['geometry']['location']['lat'] ?? '';
+            $getFromPlaceLongitude =  $getfromPlaceDetails->json()['result']['geometry']['location']['lng'] ?? '';
+
+            $getToPlaceDetails =  (new LocationService())->getPlaceDetails($toPlaceId);
+            $getToPlaceName =  $getToPlaceDetails->json()['result']['formatted_address'] ?? '';
+            $getToPlaceLattitude =  $getToPlaceDetails->json()['result']['geometry']['location']['lat'] ?? '';
+            $getToPlaceLongitude =  $getToPlaceDetails->json()['result']['geometry']['location']['lng'] ?? '';
+
+            $fixedPrices->map(function ($item) use ($getfromPlaceName, $getToPlaceName , $getFromPlaceLattitude, $getFromPlaceLongitude, $getToPlaceLattitude, $getToPlaceLongitude) {
+                $item->from_place_lattitude = $getFromPlaceLattitude;
+                $item->from_place_longitude = $getFromPlaceLongitude;
+                $item->to_place_lattitude = $getToPlaceLattitude;
+                $item->to_place_longitude = $getToPlaceLongitude;
                 $item->trip_type = 'one_way';
+                $item->from_place_name = $getfromPlaceName;
+                $item->to_place_name = $getToPlaceName;
                 return $item;
             });
 
@@ -120,13 +136,28 @@ class EstimateTripCostService extends BaseService
             $calculatedDistance['duration'] = implode(' ', $durationParts);
 
             $getAllCars = $this->getAllCars();
+            $getfromPlaceDetails =  (new LocationService())->getPlaceDetails($fromPlaceId);
+            $getfromPlaceName =  $getfromPlaceDetails->json()['result']['formatted_address'] ?? '';
+            $getFromPlaceLattitude =  $getfromPlaceDetails->json()['result']['geometry']['location']['lat'] ?? '';
+            $getFromPlaceLongitude =  $getfromPlaceDetails->json()['result']['geometry']['location']['lng'] ?? '';
+
+            $getToPlaceDetails =  (new LocationService())->getPlaceDetails($toPlaceId);
+            $getToPlaceName =  $getToPlaceDetails->json()['result']['formatted_address'] ?? '';
+            $getToPlaceLattitude =  $getToPlaceDetails->json()['result']['geometry']['location']['lat'] ?? '';
+            $getToPlaceLongitude =  $getToPlaceDetails->json()['result']['geometry']['location']['lng'] ?? '';
  
-            $getAllCars->map(function ($item) use ($fromPlaceId, $toPlaceId, $returnDate ,$calculatedDistance) {
+            $getAllCars->map(function ($item) use ($fromPlaceId, $toPlaceId, $returnDate ,$calculatedDistance , $getfromPlaceName , $getToPlaceName , $getFromPlaceLattitude, $getFromPlaceLongitude, $getToPlaceLattitude, $getToPlaceLongitude) {
                 $item->price = $item->price_per_km * $calculatedDistance['distance_meters'] / 1000;
                 $item->from_place_id = $fromPlaceId;
                 $item->to_place_id = $toPlaceId;
                 $item->return_date = $returnDate;
                 $item->trip_type = 'round_trip';
+                $item->from_place_name = $getfromPlaceName;
+                $item->to_place_name = $getToPlaceName;
+                $item->from_place_lattitude = $getFromPlaceLattitude;
+                $item->from_place_longitude = $getFromPlaceLongitude;
+                $item->to_place_lattitude = $getToPlaceLattitude;
+                $item->to_place_longitude = $getToPlaceLongitude;
                 return $item;
             });
 
@@ -162,11 +193,20 @@ class EstimateTripCostService extends BaseService
                 'distance_meters' => $totalKm * 1000,
                 'duration' => $totalHours . ' hours',
             ];
+
+            $getfromPlaceDetails =  (new LocationService())->getPlaceDetails($fromPlaceId);
+            $getfromPlaceName =  $getfromPlaceDetails->json()['result']['formatted_address'] ?? '';
+            $getFromPlaceLattitude =  $getfromPlaceDetails->json()['result']['geometry']['location']['lat'] ?? '';
+            $getFromPlaceLongitude =  $getfromPlaceDetails->json()['result']['geometry']['location']['lng'] ?? '';
+
  
-            $getAllCars->map(function ($item) use ($fromPlaceId, $pickupDate, $pickupTime, $totalHours, $totalKm) {
+            $getAllCars->map(function ($item) use ($fromPlaceId ,$totalHours,$getfromPlaceName , $getFromPlaceLattitude, $getFromPlaceLongitude) {
                 $item->price = ($item->price_per_hour * $totalHours);
                 $item->from_place_id = $fromPlaceId;
                 $item->trip_type = 'local_trip';
+                $item->from_place_name = $getfromPlaceName;
+                $item->from_place_lattitude = $getFromPlaceLattitude;
+                $item->from_place_longitude = $getFromPlaceLongitude;
                 return $item;
             });
 

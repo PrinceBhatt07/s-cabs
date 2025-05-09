@@ -23,6 +23,10 @@ class LocationService extends BaseService
                 return [
                     'description' => $place['description'] ?? '',
                     'place_id' => $place['place_id'] ?? '',
+                    'location' => [
+                        'lat' => $this->getPlaceDetails($place['place_id'])->json()['result']['geometry']['location']['lat'] ?? '',
+                        'lng' => $this->getPlaceDetails($place['place_id'])->json()['result']['geometry']['location']['lng'] ?? '',
+                    ]
                 ];
             }, $predictions);
 
@@ -31,6 +35,16 @@ class LocationService extends BaseService
         }
 
         return $this->jsonResponse(false, 'Unable to fetch places');
+    }
+
+    public function getPlaceDetails($placeId)
+    {
+        $apiKey = env('GOOGLE_MAPS_API_KEY');
+        $response = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
+            'place_id' => $placeId,
+            'key' => $apiKey,
+        ]);
+        return $response;
     }
 
     public function getNearbyPlaces($request)
@@ -42,10 +56,7 @@ class LocationService extends BaseService
             $placeId = $request->place_id;
             $query = strtolower(trim($request['query']));
 
-            $detailsResponse = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
-                'place_id' => $placeId,
-                'key' => $apiKey,
-            ]);
+            $detailsResponse = $this->getPlaceDetails($placeId);
 
             if ($detailsResponse->failed() || !isset($detailsResponse['result']['geometry']['location'])) {
                 return $this->jsonResponse(false, 'Invalid place_id or unable to get location', [], 400);

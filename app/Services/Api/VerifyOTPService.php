@@ -15,38 +15,47 @@ class VerifyOTPService extends BaseService
     {
         try {
             $user = null;
+            $token = null;
 
             if ($request->has('phone')) {
                 $user = User::where('phone', $request->phone)->first();
                 if (!$user) {
-                    return $this->jsonResponse(false, 'User not found');
+                    return $this->jsonResponse(false, 'User not found' , [] , 404);
                 }
 
                 if ($user->sms_otp !== $request->otp) {
-                    return $this->jsonResponse(false, 'Invalid OTP');
+                    return $this->jsonResponse(false, 'Invalid OTP', [] , 401);
                 }
 
                 if ($user->otp_expires_at < now()) {
-                    return $this->jsonResponse(false, 'OTP expired');
+                    return $this->jsonResponse(false, 'OTP expired' , [] , 401);
+                }
+
+                if($user->is_verified != 1){
+                    return $this->jsonResponse(false, 'User is not verified Yet By the Admin' , [] , 401);
+                }
+                else{
+                    $token = $user->createToken('auth_token')->accessToken;
                 }
 
             
                 $user->phone_verified = true;
                 $user->sms_otp = null;
+
             }
 
             elseif ($request->has('email')) {
                 $user = User::where('email', $request->email)->first();
                 if (!$user) {
-                    return $this->jsonResponse(false, 'User not found');
+                    return $this->jsonResponse(false, 'User not found ', [] , 404);
                 }
 
                 if ($user->email_otp !== $request->otp) {
-                    return $this->jsonResponse(false, 'Invalid OTP');
+                    return $this->jsonResponse(false, 'Invalid OTP' , [] , 401);
                 }
 
                 if ($user->otp_expires_at < now()) {
-                    return $this->jsonResponse(false, 'OTP expired');
+                    return $this->jsonResponse(false, 'OTP expired' , [] , 401);
                 }
 
 
@@ -71,6 +80,10 @@ class VerifyOTPService extends BaseService
                 'role' => $user->role,
                 'name' => $user->name,
             ];
+
+            if ($token != null) {
+                $responseData['token'] = $token;
+            }
 
             return $this->jsonResponse(true, 'OTP verified successfully', $responseData);
         } catch (Exception $e) {

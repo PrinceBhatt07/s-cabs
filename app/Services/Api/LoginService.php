@@ -15,7 +15,7 @@ class LoginService extends BaseService
         try {
             $user = User::where('phone', $request->phone)->first();
             if (!$user) {
-                return $this->jsonResponse(false, 'User not found');
+                return $this->jsonResponse(false, 'User not found' , [] , 404);
             }
 
             $smsOtp = rand(100000, 999999);
